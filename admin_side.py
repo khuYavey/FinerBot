@@ -3,10 +3,9 @@ import telebot
 from telebot import async_telebot
 import asyncio
 import sqlite3
-from quart import Quart
+
 import requests
 import json
-import locale
 
 from universal_functions import get_data_from_bigdb
 from data_handling import change_status
@@ -15,15 +14,7 @@ from api_data import admin_bot_token as TOKEN, admin_chat_id
 
 
 bot = async_telebot.AsyncTeleBot(TOKEN)
-app = Quart(__name__)
-loop = asyncio.get_event_loop()
-locale.setlocale(locale.LC_TIME, 'uk_UA')
-date_format = locale.nl_langinfo(locale.D_FMT)
 
-@app.route('/new_data', methods=['POST'])
-async def get_webhook():
-    await get_data_from_bigdb(id=admin_chat_id, bot=bot, admin=True, automate=True)
-    return "Success", 200
 
 @bot.message_handler(commands=['start'])
 async def fer(message):
@@ -139,33 +130,9 @@ async def get_new(call):
         caption="Дякуємо що скористались нашим ботом, ми повідомимо відправника про успішність його заявки\n"
                 "Будемо вдячні за вашу підтримку", chat_id=call.message.chat.id, message_id=call.message.id - 1,
         reply_markup=keyboard)
-#
-# @bot.message_handler(commands=['start'])
-# async def start(message):
-#     inline_button = telebot.types.InlineKeyboardButton(text="Отримати нові порушення", callback_data="/get_new")
-#     keyboard = telebot.types.InlineKeyboardMarkup()
-#     keyboard.add(inline_button)
-#
-#     await bot.send_message(chat_id=message.chat.id, text="В цей бот ви можете отримувати порушення і їхнє місцезнаходження", reply_markup=keyboard)
-#
-#
-# @bot.callback_query_handler(func=lambda call: True)
-# async def get_new(message):
-#     if message.data == "/get_new":
-#         await cleaning_chat(bot, message.data.id,10)
-#         await get_data_from_bigdb(id=message.from_user.id, bot=bot, automate=True)
-#
-#     else:
-#         raise Exception("Smth went wrong in get_new() inspector_side.py")
-
 
 
 bot.add_custom_filter(telebot.asyncio_filters.TextMatchFilter())
-
-
-asyncio.ensure_future(bot.polling())
-asyncio.ensure_future(app.run(host="127.0.0.1", port=5001, loop=loop))
-loop.run_forever()
 
 
 
