@@ -163,7 +163,7 @@ async def get_new(call):
 bot.add_custom_filter(telebot.asyncio_filters.TextMatchFilter())
 
 
-asyncio.ensure_future(bot.polling())
+asyncio.ensure_future(bot.polling(non_stop=True))
 asyncio.ensure_future(app.run(host="127.0.0.1", port=5001, loop=loop))
 loop.run_forever()
 

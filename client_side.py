@@ -100,7 +100,7 @@ async def starting_menu(message, first_start=True):
     problem_button = telebot.types.InlineKeyboardButton(text='Повідомити про помилку', callback_data='/report_problem')
     Menu_keyboard = telebot.types.InlineKeyboardMarkup().add(report_button).add(history_button).add(problem_button)
     if first_start:
-        await bot.send_message(chat_id=message.chat.id, text="Для того щоб зафіксувати неправильно повідомлене авто:\n1. Переконайтесь що на фото добре видно правопорушення\n2. Видно сам транспортний засіб", reply_markup=Menu_keyboard)  #TODO: написати інструкцію
+        await bot.send_message(chat_id=message.chat.id, text="Для того щоб зафіксувати неправильно припарковане авто:\n1. Переконайтесь що на фото добре видно правопорушення\n2. Видно сам транспортний засіб", reply_markup=Menu_keyboard)  #TODO: написати інструкцію
         await cleaning_chat(bot, message, n=3)
     else:
         await bot.send_message(chat_id=message.chat.id, text="Меню", reply_markup=Menu_keyboard)
@@ -297,7 +297,7 @@ async def problem(message):
 bot.add_custom_filter(telebot.asyncio_filters.TextMatchFilter())
 
 
-asyncio.ensure_future(bot.polling())
+asyncio.ensure_future(bot.polling(none_stop=True))
 asyncio.ensure_future(app.run(host="127.0.0.1", port=5002, loop=loop))
 loop.run_forever()
 
