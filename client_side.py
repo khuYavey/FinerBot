@@ -237,9 +237,7 @@ async def location(message):
             keyboard.add(button_yes).add(button_no)
 
 
-            await bot.send_message(chat_id=message.chat.id,text="Ви підтверджуєте сформований звіт?\n"
-                                                                "🔽                              🔽")
-
+            await bot.send_message(chat_id=message.chat.id,text="Ви підтверджуєте сформований звіт?\n\n")
             await bot.send_photo(chat_id=message.chat.id, photo=get_photo(message.chat.id),
                                  caption=f"Місце порушення - {street_name}\n"
                                          f"Час фіксації - {readable_time}",
