@@ -26,10 +26,13 @@ async def send_data(bot, id, rows, admin=False, user_history=False):
             photo_mesage = await bot.send_photo(chat_id=id, photo=image, caption=f"Місце порушення - {street_name}\n"
                                                                                                    f"Дата і час - {readable_time}")
             await bot.send_location(chat_id=id, latitude=latitude, longitude=longitude, reply_to_message_id=photo_mesage.message_id, reply_markup=keyboard)
-    if user_history is True:
+
+    if user_history is True or user_history == 'full':
         if rows == []:
             await bot.send_message(chat_id=id, text="Ви ще не зафіксуали жодного порушення")
             return
+        if user_history == 'full':
+            rows.pop(0)
         for row in rows:
 
 
@@ -51,9 +54,17 @@ async def send_data(bot, id, rows, admin=False, user_history=False):
                 status = "Водія ТЗ оштрафовано!"
             time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
             readable_time = time.strftime("%d %B %Y %H:%M")
-            photo_mesage = await bot.send_photo(chat_id=id, photo=image, caption=f"Місце порушення - {street_name}\n"
-                                                                                                   f"Дата і час - {readable_time}\n"
-                                                                                 f"Статус заявки - {status}")
+
+
+            if len(rows) > 1:
+                await bot.send_photo(chat_id=id, photo=image,
+                                                    caption=f"Місце порушення - {street_name}\n"
+                                                            f"Дата і час - {readable_time}\n" f"Статус заявки - {status}")
+            elif sqlite3.connect("bigger.db").execute('SELECT count(*) FROM reports WHERE user_id = ?',(id,)).fetchall()[0][0] > 1 :
+                button = telebot.types.InlineKeyboardMarkup().add(telebot.types.InlineKeyboardButton(text="Завантажити ще", callback_data="/load more history"))
+                await bot.send_photo(chat_id=id, photo=image, caption=f"Місце порушення - {street_name}\n"
+                                                                                                   f"Дата і час - {readable_time}\n" f"Статус заявки - {status}", reply_markup=button)
+
     if admin is True:
         for row in rows:
             image_id = row[1]
@@ -87,7 +98,9 @@ async def get_data_from_bigdb(id=None, date=None, bot=None, admin=False, user_hi
             print("SQLite error:", e)
 
     if user_history is True:
-        cursor.execute('SELECT * FROM reports WHERE user_id = ?',(id,))
+        cursor.execute('SELECT * FROM reports WHERE user_id = ? ORDER BY timestamp DESC LIMIT 1',(id,))
+    elif user_history == 'full':
+        cursor.execute('SELECT * FROM reports WHERE user_id = ? ORDER BY timestamp DESC', (id,))
     elif admin is True:
         cursor.execute('SELECT * FROM reports WHERE status = ?', ("Unvalidated",))
     if admin is False and user_history is False:

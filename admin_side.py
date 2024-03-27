@@ -7,6 +7,7 @@ from quart import Quart
 import requests
 import json
 import locale
+import datetime, time
 
 from universal_functions import get_data_from_bigdb
 from data_handling import change_status
@@ -84,21 +85,71 @@ async def get_new(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('Taken'))
 async def get_new(call):
+    # time_when_taken = datetime.datetime.now()
     conn = sqlite3.connect("bigger.db")
     cursor = conn.cursor()
     cursor.execute('SELECT user_id FROM inspectors')
     rows = cursor.fetchall()
     conn.close()
+    message_count_num = []
+
     for user_id in rows:
-        if user_id[0] == call.message.chat.id:
-            pass
+        if call.message.chat.id != user_id[0]:
+            deleting_message = await bot.send_message(chat_id=user_id[0], text="Видалення")
+            last_message_for_inspectors = None
+            i = 1
+            while True:
+                try:
+                    last_message_for_inspectors = await bot.forward_message(admin_chat_id, user_id[0], deleting_message.message_id - i)
+                    break
+                except:
+                    try:
+                        await bot.delete_message(admin_chat_id, deleting_message.message_id - i)
+                    except:
+                        pass
+                    i += 1
+
+
+            count = len(rows) * 5 - 1
+
+            while count >= 0:
+                count -= 1
+                if (datetime.datetime.utcfromtimestamp(last_message_for_inspectors.date) - datetime.timedelta(
+                    seconds=30)) <= datetime.datetime.utcfromtimestamp(deleting_message.date) <= (
+                        datetime.datetime.utcfromtimestamp(last_message_for_inspectors.date) + datetime.timedelta(
+                    seconds=30)) and deleting_message.chat.id == user_id[0]:
+                    try:
+                        await bot.delete_message(chat_id=user_id[0], message_id=deleting_message.message_id - count)
+                    except:
+                        pass
+                else:
+                    pass
         else:
-            chat_to_delete = await bot.send_message(chat_id=user_id[0], text="Видалення")
-            await bot.delete_message(chat_id=user_id[0], message_id=chat_to_delete.message_id, timeout=300)
-            await bot.delete_message(chat_id=user_id[0], timeout=300,
-                                         message_id=(chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2 - 1)))
-            await bot.delete_message(chat_id=user_id[0], timeout=300,
-                                         message_id=(chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2)))
+            pass
+
+        #видалення time >= повідомлення прийшло інспекторам-30сек and <= повідомлення прийшло інспекторам+30
+
+# for i in range(5):
+
+                # await bot.delete_message(chat_id=user_id[0], message_id=chat_to_delete.message_id - i)
+
+            # chat_to_delete = await bot.send_message(chat_id=user_id[0], text="Видалення")
+            #
+            # # await bot.send_message(admin_chat_id, text=f"{chat_to_delete.message_id}")
+            # # await bot.forward_message(admin_chat_id, user_id[0], chat_to_delete.message_id)
+            # await bot.delete_message(chat_id=user_id[0], message_id=chat_to_delete.message_id, timeout=300)
+            #
+            # # await bot.send_message(admin_chat_id, text=f"{chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2 - 1)}")
+            # # await bot.forward_message(admin_chat_id, user_id[0],chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2 - 1))
+            # await bot.delete_message(chat_id=user_id[0], timeout=300,
+            #                              message_id=(chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2 - 1)))
+            #
+            # # await bot.send_message(admin_chat_id, text=f"{chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2)}")
+            # # await bot.forward_message(admin_chat_id, user_id[0], chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2))
+            # await bot.delete_message(chat_id=user_id[0], timeout=300,
+            #                              message_id=(chat_to_delete.message_id - ((len(rows) - rows.index(user_id)) * 2)))
+
+
 
 
 
@@ -162,7 +213,8 @@ async def get_new(call):
 
 bot.add_custom_filter(telebot.asyncio_filters.TextMatchFilter())
 
-
+# asyncio.run(bot.polling(non_stop=True))
+#
 asyncio.ensure_future(bot.polling(non_stop=True))
 asyncio.ensure_future(app.run(host="127.0.0.1", port=5001, loop=loop))
 loop.run_forever()

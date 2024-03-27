@@ -119,8 +119,11 @@ async def report_problem(message):
     await bot.send_message(chat_id=message.chat.id, text="Напишіть що вас турбує в роботі бота", reply_markup=telebot.types.ForceReply(
         input_field_placeholder="Опишіть свою проблему в полі"))  # TODO незнаю як зробити репорт проблем
 
-async def history(id):
-    await get_data_from_bigdb(id=id, bot=bot, user_history=True, automate=True)
+async def history(id, all=False):
+    if all is True:
+        await get_data_from_bigdb(id=id, bot=bot, user_history='full', automate=True)
+    else:
+        await get_data_from_bigdb(id=id, bot=bot, user_history=True, automate=True)
 
 
 '''для роботи команд з меню'''
@@ -193,6 +196,8 @@ async def menu_choise(call):
         await starting_menu(call.message)
     elif call.data == '/history':
         await history(call.message.chat.id)
+    elif call.data == '/load more history':
+        await history(call.message.chat.id, all=True)
 
 
 @bot.message_handler(content_types=['photo'])
@@ -293,6 +298,7 @@ async def problem(message):
 
 
 bot.add_custom_filter(telebot.asyncio_filters.TextMatchFilter())
+
 
 
 asyncio.ensure_future(bot.polling(none_stop=True))
