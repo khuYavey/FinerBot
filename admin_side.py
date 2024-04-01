@@ -7,7 +7,9 @@ from quart import Quart
 import requests
 import json
 import locale
-import datetime, time
+import datetime
+import pytz
+
 
 from universal_functions import get_data_from_bigdb
 from data_handling import change_status
@@ -16,10 +18,14 @@ from api_data import admin_bot_token as TOKEN, admin_chat_id
 
 
 bot = async_telebot.AsyncTeleBot(TOKEN)
+
 app = Quart(__name__)
+
 loop = asyncio.get_event_loop()
+
 locale.setlocale(locale.LC_TIME, 'uk_UA')
 date_format = locale.nl_langinfo(locale.D_FMT)
+time_zone = pytz.timezone('Europe/Kiev')
 
 @app.route('/new_data', methods=['POST'])
 async def get_webhook():
@@ -114,9 +120,9 @@ async def get_new(call):
 
             while count >= 0:
                 count -= 1
-                if (datetime.datetime.utcfromtimestamp(last_message_for_inspectors.date) - datetime.timedelta(
-                    seconds=30)) <= datetime.datetime.utcfromtimestamp(deleting_message.date) <= (
-                        datetime.datetime.utcfromtimestamp(last_message_for_inspectors.date) + datetime.timedelta(
+                if (time_zone.localize(datetime.datetime.utcfromtimestamp(last_message_for_inspectors.date)) - datetime.timedelta(
+                    seconds=30)) <= time_zone.localize(datetime.datetime.utcfromtimestamp(deleting_message.date)) <= (time_zone.localize(
+                        datetime.datetime.utcfromtimestamp(last_message_for_inspectors.date)) + datetime.timedelta(
                     seconds=30)) and deleting_message.chat.id == user_id[0]:
                     try:
                         await bot.delete_message(chat_id=user_id[0], message_id=deleting_message.message_id - count)

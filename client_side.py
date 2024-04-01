@@ -7,6 +7,7 @@ import requests
 from quart import Quart, request
 import json
 import locale
+import pytz
 
 from photo_date_analyze import handle_photo
 from location import analyze_location
@@ -20,8 +21,12 @@ bot = async_telebot.AsyncTeleBot(TOKEN)
 loop = asyncio.get_event_loop()
 
 app = Quart(__name__)
+
 locale.setlocale(locale.LC_TIME, 'uk_UA')
 date_format = locale.nl_langinfo(locale.D_FMT)
+
+time_zone = pytz.timezone('Europe/Kiev')
+
 
 
 @app.route('/approven', methods=['POST'])
@@ -44,7 +49,7 @@ async def non_valid():
     time = data.get("date")
     id_ = await get_data_from_bigdb(date=time)
     time = datetime.datetime.strptime(time,'%Y-%m-%d %H:%M:%S')
-    diference = datetime.datetime.now()-time
+    diference = datetime.datetime.now(time_zone)-time
     if int(diference.seconds/60) < 60:
         button = telebot.types.InlineKeyboardButton(callback_data="/report_violation", text='Повторити')
         keyboard = telebot.types.InlineKeyboardMarkup()
@@ -226,7 +231,7 @@ async def photo_analysys(message):
 async def location(message):
     if state.report_get_status():
         street_name = analyze_location(message.location.latitude, message.location.longitude)
-        current_time = datetime.datetime.now()
+        current_time = datetime.datetime.now(time_zone)
         time_to_db = current_time.strftime("%Y-%m-%d %H:%M:%S")
         readable_time = current_time.strftime("%d %B %Y %H:%M")
         # readable_time = datetime.datetime.strptime(f"{current_time}", "%d %B %Y %H:%M")
